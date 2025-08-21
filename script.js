@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-
     // --- DADOS DOS ARTISTAS ---
     const artists = [
         { id: 1, name: 'Vincent van Gogh', bio: 'Pintor pós-impressionista holandês que se tornou uma das figuras mais famosas e influentes da história da arte ocidental.', x: 100, y: 150 },
@@ -18,9 +17,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- ESTADO DO JOGO ---
     let playerPos = { x: 50, y: 50 };
+    let targetPos = { x: 50, y: 50 }; // Para interpolação suave
     let nearbyArtistId = null;
-    const PLAYER_SPEED = 15;
-    const INTERACTION_RADIUS = 40; // Distância para poder interagir
+    const PLAYER_SPEED = 5; // Reduzido para melhor interpolação
+    const INTERACTION_RADIUS = 40;
+    
+    // Controles de teclado
+    const keys = {
+        ArrowUp: false,
+        ArrowDown: false,
+        ArrowLeft: false,
+        ArrowRight: false
+    };
 
     // --- FUNÇÕES ---
 
@@ -36,15 +44,35 @@ document.addEventListener('DOMContentLoaded', () => {
             tombstone.dataset.artistId = artist.id;
             gameContainer.appendChild(tombstone);
         });
-        updateButterflyPosition();
+        
+        // Inicia o loop de animação
+        gameLoop();
     }
 
     /**
-     * Atualiza a posição do elemento da borboleta no DOM.
+     * Atualiza a posição do elemento da borboleta no DOM com interpolação suave.
      */
     function updateButterflyPosition() {
-        butterfly.style.left = `${playerPos.x}px`;
-        butterfly.style.top = `${playerPos.y}px`;
+        // Interpolação suave (lerp)
+        playerPos.x += (targetPos.x - playerPos.x) * 0.2;
+        playerPos.y += (targetPos.y - playerPos.y) * 0.2;
+        
+        butterfly.style.left = playerPos.x + 'px';
+        butterfly.style.top = playerPos.y + 'px';
+    }
+    
+    /**
+     * Atualiza a posição alvo com base nas teclas pressionadas.
+     */
+    function updateMovement() {
+        if (keys.ArrowUp) targetPos.y -= PLAYER_SPEED;
+        if (keys.ArrowDown) targetPos.y += PLAYER_SPEED;
+        if (keys.ArrowLeft) targetPos.x -= PLAYER_SPEED;
+        if (keys.ArrowRight) targetPos.x += PLAYER_SPEED;
+
+        // Mantém dentro dos limites
+        targetPos.x = Math.max(0, Math.min(targetPos.x, gameContainer.offsetWidth - butterfly.offsetWidth));
+        targetPos.y = Math.max(0, Math.min(targetPos.y, gameContainer.offsetHeight - butterfly.offsetHeight));
     }
     
     /**
@@ -99,38 +127,35 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.classList.remove('active');
     }
 
+    /**
+     * Loop principal do jogo para animação suave.
+     */
+    function gameLoop() {
+        updateMovement();
+        updateButterflyPosition();
+        checkInteraction();
+        requestAnimationFrame(gameLoop);
+    }
 
     // --- EVENT LISTENERS ---
 
-    // Movimentação do jogador
+    // Controle de teclado - pressionar
     document.addEventListener('keydown', (e) => {
-        switch (e.key) {
-            case 'ArrowUp':
-                playerPos.y -= PLAYER_SPEED;
-                break;
-            case 'ArrowDown':
-                playerPos.y += PLAYER_SPEED;
-                break;
-            case 'ArrowLeft':
-                playerPos.x -= PLAYER_SPEED;
-                break;
-            case 'ArrowRight':
-                playerPos.x += PLAYER_SPEED;
-                break;
-            case 'e':
-            case 'E':
-                if (nearbyArtistId) {
-                    openModal(nearbyArtistId);
-                }
-                return; // Evita a verificação de colisão desnecessária
+        if (keys.hasOwnProperty(e.key)) {
+            keys[e.key] = true;
         }
-
-        // Garante que a borboleta não saia dos limites do contêiner
-        playerPos.x = Math.max(0, Math.min(playerPos.x, gameContainer.offsetWidth - butterfly.offsetWidth));
-        playerPos.y = Math.max(0, Math.min(playerPos.y, gameContainer.offsetHeight - butterfly.offsetHeight));
         
-        updateButterflyPosition();
-        checkInteraction();
+        // Interação com a tecla E
+        if ((e.key === 'e' || e.key === 'E') && nearbyArtistId) {
+            openModal(nearbyArtistId);
+        }
+    });
+
+    // Controle de teclado - soltar
+    document.addEventListener('keyup', (e) => {
+        if (keys.hasOwnProperty(e.key)) {
+            keys[e.key] = false;
+        }
     });
 
     // Fechar o modal
