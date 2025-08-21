@@ -1,0 +1,110 @@
+/* --- ESTILOS GERAIS --- */
+body {
+    margin: 0;
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* --- CONTÊINER DO JOGO --- */
+#game-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+    border: 2px solid #555;
+    /* IMAGEM DE FUNDO DO CENÁRIO */
+    background-image: url('assets/cemetery.png');
+    background-size: cover; /* Garante que a imagem cubra todo o contêiner */
+    overflow: hidden;
+    /* Garante que as imagens mantenham a estética pixel art */
+    image-rendering: pixelated;
+}
+
+/* --- ELEMENTOS DO JOGO (JOGADOR E LÁPIDES) --- */
+#butterfly {
+    position: absolute;
+    width: 82px;
+    height: 82px;
+    /* REMOVE A COR DE FUNDO */
+    background-color: transparent; 
+    /* USA O SPRITE DA BORBOLETA */
+    background-image: url('assets/butterfly.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    transition: top 0.1s linear, left 0.1s linear;
+    z-index: 10;
+}
+
+.tombstone {
+    position: absolute;
+    width: 182px;
+    height: 182px;
+    /* REMOVE A COR DE FUNDO E BORDA */
+    background-color: transparent;
+    border: none;
+    /* USA O SPRITE DA LÁPIDE */
+    background-image: url('assets/tombstone.png');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Efeito de brilho para interação */
+.tombstone.interactive {
+    filter: drop-shadow(0 0 5px yellow); /* Um efeito de sombra mais bonito */
+    cursor: pointer;
+}
+
+
+/* --- JANELA MODAL (Sem alterações aqui) --- */
+#artist-modal {
+    display: none; 
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+}
+
+#artist-modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background-color: #2c2c2c;
+    padding: 25px;
+    border: 1px solid #888;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    width: 80%;
+    max-width: 500px;
+    text-align: center;
+}
+
+#modal-title {
+    margin-top: 0;
+    color: #ffa500;
+}
+
+#modal-close-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    border: none;
+    background-color: #555;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+#modal-close-btn:hover {
+    background-color: #777;
+}
