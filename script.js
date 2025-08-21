@@ -14,14 +14,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalTitle = document.getElementById('modal-title');
     const modalBio = document.getElementById('modal-bio');
     const modalCloseBtn = document.getElementById('modal-close-btn');
+    const proximityIndicator = document.createElement('div');
+    proximityIndicator.id = 'proximity-indicator';
+    gameContainer.appendChild(proximityIndicator);
 
     // --- ESTADO DO JOGO ---
     let playerPos = { x: 50, y: 50 };
-    let targetPos = { x: 50, y: 50 }; // Para interpolação suave
+    let targetPos = { x: 50, y: 50 };
     let nearbyArtistId = null;
-    const PLAYER_SPEED = 5; // Reduzido para melhor interpolação
-    const INTERACTION_RADIUS = 40;
-    
+    let proximityLevel = 0; // 0 a 1 indicando o nível de proximidade
+    const PLAYER_SPEED = 5;
+    const INTERACTION_RADIUS = 80; // Aumentado para ter zonas de proximidade
+    const CLOSE_RADIUS = 40; // Raio para interação imediata
+
     // Controles de teclado
     const keys = {
         ArrowUp: false,
@@ -42,6 +47,12 @@ document.addEventListener('DOMContentLoaded', () => {
             tombstone.style.left = `${artist.x}px`;
             tombstone.style.top = `${artist.y}px`;
             tombstone.dataset.artistId = artist.id;
+            
+            // Adiciona aura sutil à lápide
+            const tombstoneAura = document.createElement('div');
+            tombstoneAura.className = 'tombstone-aura';
+            tombstone.appendChild(tombstoneAura);
+            
             gameContainer.appendChild(tombstone);
         });
         
@@ -57,8 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
         playerPos.x += (targetPos.x - playerPos.x) * 0.2;
         playerPos.y += (targetPos.y - playerPos.y) * 0.2;
         
-        butterfly.style.left = playerPos.x + 'px';
-        butterfly.style.top = playerPos.y + 'px';
+        butterfly.style.left = `${playerPos.x}px`;
+        butterfly.style.top = `${playerPos.y}px`;
     }
     
     /**
@@ -80,30 +91,140 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function checkInteraction() {
         const tombstones = document.querySelectorAll('.tombstone');
-        let artistFound = false;
+        let closestDistance = INTERACTION_RADIUS;
+        let closestTombstone = null;
+        proximityLevel = 0;
         
         // Remove destaque de todas as lápides
-        tombstones.forEach(t => t.classList.remove('interactive'));
+        tombstones.forEach(t => {
+            t.classList.remove('interactive', 'close');
+            const aura = t.querySelector('.tombstone-aura');
+            if (aura) aura.style.opacity = '0';
+        });
 
+        // Encontra a lápide mais próxima
         for (const tombstone of tombstones) {
-            const tombstoneX = parseInt(tombstone.style.left, 10);
-            const tombstoneY = parseInt(tombstone.style.top, 10);
+            const tombstoneX = parseInt(tombstone.style.left, 10) + tombstone.offsetWidth/2;
+            const tombstoneY = parseInt(tombstone.style.top, 10) + tombstone.offsetHeight/2;
+            
+            const playerCenterX = playerPos.x + butterfly.offsetWidth/2;
+            const playerCenterY = playerPos.y + butterfly.offsetHeight/2;
 
-            // Calcula a distância entre o centro da borboleta e o da lápide
+            // Calcula a distância entre os centros
             const distance = Math.sqrt(
-                Math.pow(playerPos.x - tombstoneX, 2) + Math.pow(playerPos.y - tombstoneY, 2)
+                Math.pow(playerCenterX - tombstoneX, 2) + Math.pow(playerCenterY - tombstoneY, 2)
             );
 
-            if (distance < INTERACTION_RADIUS) {
-                nearbyArtistId = tombstone.dataset.artistId;
-                tombstone.classList.add('interactive'); // Adiciona destaque visual
-                artistFound = true;
-                break; // Interage com apenas uma lápide por vez
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestTombstone = tombstone;
             }
         }
 
-        if (!artistFound) {
+        // Atualiza indicadores de proximidade
+        if (closestTombstone) {
+            // Calcula o nível de proximidade (0 a 1)
+            proximityLevel = 1 - (closestDistance / INTERACTION_RADIUS);
+            
+            // Atualiza o indicador visual
+            updateProximityIndicator(closestTombstone, proximityLevel);
+            
+            // Adiciona efeitos visuais baseados na proximidade
+            if (closestDistance < CLOSE_RADIUS) {
+                closestTombstone.classList.add('interactive', 'close');
+                nearbyArtistId = closestTombstone.dataset.artistId;
+                
+                // Efeito de pulsação mais intenso
+                const aura = closestTombstone.querySelector('.tombstone-aura');
+                if (aura) {
+                    aura.style.opacity = '0.7';
+                    aura.style.transform = `scale(${1.2 + proximityLevel * 0.3})`;
+                }
+                
+                // Adiciona efeito de partículas (opcional)
+                if (proximityLevel > 0.8 && Math.random() > 0.7) {
+                    createParticleEffect(closestTombstone);
+                }
+            } else {
+                closestTombstone.classList.add('interactive');
+                nearbyArtistId = closestTombstone.dataset.artistId;
+                
+                // Efeito de pulsação suave
+                const aura = closestTombstone.querySelector('.tombstone-aura');
+                if (aura) {
+                    aura.style.opacity = (0.3 + proximityLevel * 0.4).toString();
+                    aura.style.transform = `scale(${1 + proximityLevel * 0.2})`;
+                }
+            }
+        } else {
             nearbyArtistId = null;
+            proximityIndicator.style.opacity = '0';
+        }
+    }
+
+    /**
+     * Atualiza o indicador visual de proximidade.
+     */
+    function updateProximityIndicator(tombstone, level) {
+        const rect = tombstone.getBoundingClientRect();
+        const containerRect = gameContainer.getBoundingClientRect();
+        
+        // Posiciona o indicador entre a borboleta e a lápide
+        const tombstoneX = parseInt(tombstone.style.left, 10) + tombstone.offsetWidth/2;
+        const tombstoneY = parseInt(tombstone.style.top, 10) + tombstone.offsetHeight/2;
+        
+        const playerCenterX = playerPos.x + butterfly.offsetWidth/2;
+        const playerCenterY = playerPos.y + butterfly.offsetHeight/2;
+        
+        // Ponto intermediário (70% em direção à lápide)
+        const indicatorX = playerCenterX + (tombstoneX - playerCenterX) * 0.7;
+        const indicatorY = playerCenterY + (tombstoneY - playerCenterY) * 0.7;
+        
+        proximityIndicator.style.left = `${indicatorX}px`;
+        proximityIndicator.style.top = `${indicatorY}px`;
+        proximityIndicator.style.opacity = level.toString();
+        proximityIndicator.style.transform = `scale(${0.5 + level * 0.5})`;
+        
+        // Muda a cor baseado na proximidade
+        const hue = 120 - (level * 120); // Verde para vermelho
+        proximityIndicator.style.backgroundColor = `hsl(${hue}, 80%, 60%)`;
+    }
+
+    /**
+     * Cria efeito de partículas ao redor da lápide (opcional).
+     */
+    function createParticleEffect(tombstone) {
+        for (let i = 0; i < 3; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            
+            const tombstoneRect = tombstone.getBoundingClientRect();
+            const containerRect = gameContainer.getBoundingClientRect();
+            
+            const x = tombstoneRect.left - containerRect.left + tombstone.offsetWidth/2;
+            const y = tombstoneRect.top - containerRect.top + tombstone.offsetHeight/2;
+            
+            particle.style.left = `${x}px`;
+            particle.style.top = `${y}px`;
+            
+            // Direção aleatória
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 20 + Math.random() * 30;
+            
+            gameContainer.appendChild(particle);
+            
+            // Animação
+            setTimeout(() => {
+                particle.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
+                particle.style.opacity = '0';
+            }, 10);
+            
+            // Remove após animação
+            setTimeout(() => {
+                if (particle.parentNode) {
+                    particle.parentNode.removeChild(particle);
+                }
+            }, 1000);
         }
     }
 
@@ -143,6 +264,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (e) => {
         if (keys.hasOwnProperty(e.key)) {
             keys[e.key] = true;
+            
+            // Adiciona classe de movimento para animação da borboleta
+            butterfly.classList.add('moving');
         }
         
         // Interação com a tecla E
@@ -155,6 +279,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keyup', (e) => {
         if (keys.hasOwnProperty(e.key)) {
             keys[e.key] = false;
+            
+            // Remove classe de movimento se nenhuma tecla está pressionada
+            if (!keys.ArrowUp && !keys.ArrowDown && !keys.ArrowLeft && !keys.ArrowRight) {
+                butterfly.classList.remove('moving');
+            }
         }
     });
 
@@ -169,4 +298,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- INICIALIZAÇÃO DO JOGO ---
     init();
-});
+})

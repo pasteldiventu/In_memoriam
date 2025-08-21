@@ -4,7 +4,12 @@ body {
     background-color: #1a1a1a;
     color: #f0f0f0;
     font-family: 'Courier New', Courier, monospace;
+    
+    /* Organiza os elementos (jogo e legenda) em uma coluna vertical */
     display: flex;
+    flex-direction: column; 
+    
+    /* Centraliza tudo na tela */
     justify-content: center;
     align-items: center;
     height: 100vh;
@@ -105,6 +110,16 @@ body {
     border-radius: 5px;
 }
 
-#modal-close-btn:hover {
-    background-color: #777;
+/* --- ESTILO DA LEGENDA DE CONTROLES --- */
+#controls-legend {
+    margin-top: 20px; /* Adiciona um espaço acima da legenda */
+    padding: 10px;
+    color: #a0a0a0;
+    text-align: center;
+    border: 1px dashed #555;
+    border-radius: 5px;
+}
+
+#controls-legend strong {
+    color: #f0f0f0;
 }
