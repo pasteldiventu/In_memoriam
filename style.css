@@ -1,125 +1,265 @@
-/* --- ESTILOS GERAIS --- */
-body {
-    margin: 0;
-    background-color: #1a1a1a;
-    color: #f0f0f0;
-    font-family: 'Courier New', Courier, monospace;
-    
-    /* Organiza os elementos (jogo e legenda) em uma coluna vertical */
-    display: flex;
-    flex-direction: column; 
-    
-    /* Centraliza tudo na tela */
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    overflow: hidden;
+/* =========================
+   TEMA + QUALIDADE (HD)
+   ========================= */
+:root{
+  --bg:#1a1a1a;
+  --ink:#f0f0f0;
+  --panel:#2c2c2c;
+  --line:#888;
+  --accent:#ff9e01;
+  --accent-soft: rgba(255,158,1,.3);
+  --glow: 0 0 18px rgba(255,215,0,.55), 0 0 38px rgba(255,170,0,.25);
 }
 
-/* --- CONTÊINER DO JOGO --- */
-#game-container {
-    position: relative;
-    width: 800px;
-    height: 600px;
-    border: 2px solid #555;
-    /* IMAGEM DE FUNDO DO CENÁRIO */
-    background-image: url('assets/cemetery.png');
-    background-size: cover; /* Garante que a imagem cubra todo o contêiner */
-    overflow: hidden;
-    /* Garante que as imagens mantenham a estética pixel art */
-    image-rendering: pixelated;
+/* --- RESET & BASE --- */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family: ui-monospace, SFMono-Regular, "Courier New", monospace;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+  image-rendering:auto;
+  image-rendering:high-quality;
+  -ms-interpolation-mode:bicubic;
 }
 
-/* --- ELEMENTOS DO JOGO (JOGADOR E LÁPIDES) --- */
-#butterfly {
-    position: absolute;
-    width: 82px;
-    height: 82px;
-    /* REMOVE A COR DE FUNDO */
-    background-color: transparent; 
-    /* USA O SPRITE DA BORBOLETA */
-    background-image: url('assets/butterfly.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    transition: top 0.1s linear, left 0.1s linear;
-    z-index: 10;
+/* =========================
+   VIEWPORT DO JOGO
+   ========================= */
+#game-wrapper{
+  position:relative;
+  width:800px;
+  height:600px;
+  border:1px solid #555;
+  border-radius:12px;
+  overflow:hidden;
+  background:#0b0b0b;
+  box-shadow:0 10px 28px rgba(0,0,0,.45);
+  isolation:isolate;
 }
 
-.tombstone {
-    position: absolute;
-    width: 182px;
-    height: 182px;
-    /* REMOVE A COR DE FUNDO E BORDA */
-    background-color: transparent;
-    border: none;
-    /* USA O SPRITE DA LÁPIDE */
-    background-image: url('assets/tombstone.png');
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
+/* Escala responsiva opcional */
+@media (min-width:1100px){
+  #game-wrapper{ transform:scale(1.1); transform-origin:center }
+}
+@media (min-width:1400px){
+  #game-wrapper{ transform:scale(1.25) }
 }
 
-/* Efeito de brilho para interação */
-.tombstone.interactive {
-    filter: drop-shadow(0 0 5px yellow); /* Um efeito de sombra mais bonito */
-    cursor: pointer;
+/* =========================
+   CENÁRIO (com imagens 2x)
+   ========================= */
+#game-container{
+  position:absolute;
+  width:2000px;
+  height:2000px;
+
+  background-image:url('assets/cemetery.png');
+  background-size:cover;
+  background-position:center;
+  background-image:image-set(
+    url('assets/cemetery.png') 1x,
+    url('assets/cemetery@2x.png') 2x,
+    url('assets/cemetery@3x.png') 3x
+  );
+  image-rendering:auto;
+  background-blend-mode:normal;
+}
+
+/* =========================
+   SPRITES – BORBOLETA
+   ========================= */
+#butterfly{
+  position:absolute;
+  width:82px; height:82px;
+  background-color:transparent;
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:contain;
+  background-image:url('assets/butterfly.png');
+  background-image:image-set(
+    url('assets/butterfly.png') 1x,
+    url('assets/butterfly@2x.png') 2x,
+    url('assets/butterfly@3x.png') 3x
+  );
+  z-index:10;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.6));
+  will-change:transform, filter;
+}
+#butterfly.moving{ animation:flutter .35s infinite alternate ease-in-out }
+@keyframes flutter{ from{ transform:scale(1) } to{ transform:scale(1.08) } }
+
+/* =========================
+   LÁPIDES (sprites 2x)
+   ========================= */
+.tombstone{
+  position:absolute;
+  width:182px; height:182px;
+  background-color:transparent;
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:contain;
+  background-image:url('assets/cemetery.png');
+  background-image:image-set(
+    url('assets/tombstone.png') 1x,
+    url('assets/tombstone@2x.png') 2x,
+    url('assets/tombstone@3x.png') 3x
+  );
+  filter:drop-shadow(0 8px 16px rgba(0,0,0,.55));
+  transition:filter .18s ease, transform .18s ease;
+  will-change:filter, transform;
+}
+.tombstone.interactive{
+  filter:drop-shadow(0 0 10px rgba(255,230,120,.75)) drop-shadow(0 8px 16px rgba(0,0,0,.55));
+  cursor:pointer;
+}
+.tombstone.close{
+  transform:scale(1.03);
+  filter:drop-shadow(0 0 16px rgba(255,215,0,.95)) drop-shadow(0 10px 20px rgba(0,0,0,.6));
+}
+.tombstone-aura {
+  position: absolute;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%,
+              rgba(255,215,0,.35) 0%,
+              rgba(255,215,0,.18) 38%,
+              rgba(255,215,0,0) 72%);
+  opacity: 0.6;                /* <-- sempre visível */
+  transform: scale(1);         /* escala normal */
+  pointer-events: none;
+  filter: blur(.2px);
+  animation: auraPulse 2.5s infinite ease-in-out; /* animação suave */
+}
+
+@keyframes auraPulse {
+  from { transform: scale(0.95); opacity: 0.5; }
+  50%  { transform: scale(1.1); opacity: 0.75; }
+  to   { transform: scale(0.95); opacity: 0.5; }
 }
 
 
-/* --- JANELA MODAL (Sem alterações aqui) --- */
-#artist-modal {
-    display: none; 
-    position: fixed;
-    z-index: 100;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    justify-content: center;
-    align-items: center;
+/* =========================
+   INDICADORES E PARTÍCULAS
+   ========================= */
+#proximity-indicator{
+  position:absolute;
+  width:30px; height:30px; border-radius:50%;
+  background:radial-gradient(circle, rgba(255,193,7,.95) 0%, rgba(255,193,7,.55) 55%, rgba(255,193,7,0) 100%);
+  box-shadow:var(--glow);
+  opacity:0; transform:scale(.85);
+  transition:opacity .2s ease, transform .2s ease;
+  pointer-events:none;
+  z-index:90;
+}
+.particle{
+  position:absolute; width:8px; height:8px; border-radius:50%;
+  background:radial-gradient(circle, rgba(255,215,0,1) 0%, rgba(255,215,0,.6) 60%, rgba(255,215,0,0) 100%);
+  opacity:.9;
+  filter:drop-shadow(0 0 10px rgba(255,215,0,.7));
+  transition:transform .5s ease-out, opacity .5s ease-out;
+  pointer-events:none;
+  will-change:transform, opacity;
 }
 
-#artist-modal.active {
-    display: flex;
+/* =========================
+   MODAL (UI em HD)
+   ========================= */
+#artist-modal{
+  display:none; position:fixed; inset:0; z-index:100;
+  background:rgba(0,0,0,.7);
+  backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
+  align-items:center; justify-content:center;
+}
+#artist-modal.active{ display:flex }
+.modal-content{
+  background:linear-gradient(180deg, #2e2e2e, #262626);
+  color:var(--ink);
+  padding:26px 24px; border:1px solid #3b3b3b; border-radius:12px;
+  width:min(500px,84%); text-align:center;
+  box-shadow:0 12px 32px rgba(0,0,0,.55);
+}
+#modal-title{ margin:0 0 8px; color:#ffb341; font-weight:700 }
+#modal-bio{ margin:8px 0 18px; line-height:1.55 }
+#modal-close-btn{
+  margin-top:8px; padding:10px 18px; border:none; border-radius:8px;
+  background:#555; color:#fff; cursor:pointer;
+  transition:background .15s ease, transform .1s ease;
+}
+#modal-close-btn:hover{ background:#717171; transform:translateY(-1px) }
+
+/* =========================
+   MINIMAPA
+   ========================= */
+#mini-map{
+  position:absolute; bottom:10px; right:10px;
+  width:150px; height:150px;
+  background:rgba(0,0,0,.55);
+  border:1px solid #444; border-radius:10px;
+  z-index:200; overflow:hidden;
+  box-shadow:0 6px 16px rgba(0,0,0,.45);
+}
+#view-indicator{
+  position:absolute; background:var(--accent-soft);
+  border:1px solid rgba(255,158,1,.8);
+  box-shadow:0 0 8px rgba(255,158,1,.55);
+  border-radius:3px;
+}
+#player-mini{
+  position:absolute; width:4px; height:4px; background:var(--accent);
+  border-radius:50%;
+  box-shadow:0 0 6px rgba(255,158,1,.8);
+}
+.mini-point{
+  position:absolute; width:3px; height:3px; border-radius:50%;
+  background:#cfcfcf; box-shadow:0 0 4px rgba(255,255,255,.35);
 }
 
-.modal-content {
-    background-color: #2c2c2c;
-    padding: 25px;
-    border: 1px solid #888;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    width: 80%;
-    max-width: 500px;
-    text-align: center;
+/* =========================
+   HUD - CONTROLES (novo)
+   ========================= */
+#hud-controls{
+  position:absolute;
+  left:18px; bottom:18px;
+  z-index:220;
+  max-width:74%;
+  padding:12px 14px;
+  color:#e7e7e7;
+  background:rgba(0,0,0,.45);
+  border:1px dashed #6d6d6d;
+  border-radius:8px;
+  backdrop-filter:blur(1.5px);
+  -webkit-backdrop-filter:blur(1.5px);
+  box-shadow:0 4px 14px rgba(0,0,0,.35);
+  font-size:14px; line-height:1.4;
+  animation:hudIn .25s ease-out;
+}
+@keyframes hudIn{ from{ opacity:0; transform:translateY(6px) } to{ opacity:1; transform:none } }
+
+#hud-controls .hud-strong{
+  font-weight:700;
+  text-decoration:underline;
+  text-decoration-thickness:1px;
+  text-underline-offset:2px;
+  color:#b7d7ff;
+}
+#hud-controls .hud-sep{ opacity:.75; margin:0 8px }
+#hud-controls .hud-key{
+  display:inline-block; min-width:1.2em;
+  padding:0 6px; margin-left:2px;
+  border:1px solid #777; border-bottom-width:2px;
+  border-radius:4px; background:#1c1c1c; color:#fff;
+  font-weight:700;
 }
 
-#modal-title {
-    margin-top: 0;
-    color: #ffa500;
+/* Anti-aliasing do texto da UI */
+@supports (-webkit-font-smoothing: antialiased) {
+  body{ -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
 }
 
-#modal-close-btn {
-    margin-top: 20px;
-    padding: 10px 20px;
-    border: none;
-    background-color: #555;
-    color: white;
-    cursor: pointer;
-    border-radius: 5px;
-}
-
-/* --- ESTILO DA LEGENDA DE CONTROLES --- */
-#controls-legend {
-    margin-top: 20px; /* Adiciona um espaço acima da legenda */
-    padding: 10px;
-    color: #a0a0a0;
-    text-align: center;
-    border: 1px dashed #555;
-    border-radius: 5px;
-}
-
-#controls-legend strong {
-    color: #f0f0f0;
-}
+/* Opcional: classe para modo pixel-art */
+.pixel{ image-rendering:pixelated !important }

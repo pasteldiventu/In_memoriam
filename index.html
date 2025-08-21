@@ -1,29 +1,40 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>In memoriam</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>In memoriam - Mapa Expandido</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
+  <div id="game-wrapper">
     <div id="game-container">
-        <div id="butterfly"></div>
-        </div>
-
-    <div id="artist-modal">
-        <div class="modal-content">
-            <h2 id="modal-title">Nome do Artista</h2>
-            <p id="modal-bio">Biografia do artista aparecerá aqui.</p>
-            <button id="modal-close-btn">Fechar</button>
-        </div>
+      <div id="butterfly"></div>
     </div>
 
-    <div id="controls-legend">
-        <p><strong>Movimento:</strong> Setas Direcionais | <strong>Interagir:</strong> Tecla 'E'</p>
+    <!-- MINIMAPA -->
+    <div id="mini-map">
+      <div id="view-indicator"></div>
+      <div id="player-mini"></div>
     </div>
-    
-    <script src="script.js"></script>
+
+    <!-- PAINEL DE INSTRUÇÕES (novo) -->
+    <div id="hud-controls" aria-label="Controles do jogo">
+      <span class="hud-strong">Movimento:</span> Setas Direcionais
+      <span class="hud-sep">|</span>
+      <span class="hud-strong">Interagir:</span> Tecla <span class="hud-key">E</span>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div id="artist-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-content">
+      <h2 id="modal-title">Nome do Artista</h2>
+      <p id="modal-bio">Biografia do artista aparecerá aqui.</p>
+      <button id="modal-close-btn" type="button">Fechar</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
